@@ -1,0 +1,42 @@
+- name: Apply Netplan configuration and install Nginx reverse proxy
+  hosts: all
+  become: true
+  tasks:
+    # Netplan configuration tasks
+    - name: Copy Netplan configuration file
+      copy:
+        src: ./bridge/bridge-netplan.yaml
+        dest: /etc/netplan/
+        owner: root
+        group: root
+        mode: 0644
+    - name: Apply Netplan configuration
+      command: netplan apply
+
+    # Nginx reverse proxy installation tasks
+    - name: Install Nginx package
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Copy Nginx configuration file
+      copy:
+        src: ./bridge/mysite.local
+        dest: /etc/nginx/sites-available/mysite.local
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Create symbolic link for Nginx configuration
+      file:
+        src: /etc/nginx/sites-available/mysite.local
+        dest: /etc/nginx/sites-enabled/mysite.local
+        state: link
+        owner: root
+        group: root
+
+    - name: Reload Nginx service
+      service:
+        name: nginx
+        state: reloaded

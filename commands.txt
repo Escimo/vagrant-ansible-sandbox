@@ -1,0 +1,32 @@
+bridge:
+sudo ip route add 192.168.102.0/24 via 192.168.100.4
+
+web:
+ip route add default via 192.168.100.2
+
+dbserver:
+ip route add 192.168.102.0/24 via 192.168.100.4
+
+
+
+             network:
+                ethernets:
+                  eth0:
+                    [...]
+                    routes:
+                      - to: default # could be 0.0.0.0/0 optionally
+                        via: 10.0.0.1
+                        metric: 100
+                        on-link: true
+                      - to: default # could be ::/0 optionally
+                        via: cf02:de:ad:be:ef::2
+                  eth1:
+                    [...]
+                    routes:
+                      - to: default
+                        via: 172.134.67.1
+                        metric: 100
+                        on-link: true
+                        # Not on the main routing table,
+                        # does not conflict with the eth0 default route
+                    table: 76

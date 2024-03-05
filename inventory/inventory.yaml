@@ -1,0 +1,29 @@
+---
+#ungrouped:
+#  hosts:
+#    mail.example.com:
+webservers:
+  hosts:
+    web.vagrant: 192.168.100.4
+dbservers:
+  hosts:
+    db.vagrant:
+#    two.example.com:
+#    three.example.com:
+#oracle:
+#  hosts:
+#    oracle-centos:
+#    oracle-ubuntu:
+#aws:
+#  hosts:
+#    bar.example.com:
+#    three.example.com:
+#prod:
+#  hosts:
+#    foo.example.com:
+#    one.example.com:
+#    two.example.com:
+#test:
+#  hosts:
+#    bar.example.com:
+#    three.example.com:
