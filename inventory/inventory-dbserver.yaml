@@ -1,4 +1,0 @@
----
-dbservers:
-  hosts:
-    db.vagrant: 192.168.100.3

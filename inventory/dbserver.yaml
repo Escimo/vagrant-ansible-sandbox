@@ -1,0 +1,5 @@
+dbserver:
+  hosts:
+    db.vagrant: 
+        ansible_host: 192.168.100.3
+        ansible_ssh_private_key_file: /Users/angryfossa/Desktop/Hashicorp/Vagrant/HillelIT/.vagrant/machines/dbserver/virtualbox/private_key

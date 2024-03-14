@@ -1,0 +1,82 @@
+---
+- name: Apply Netplan configuration. Install and configure MySQL
+  hosts: dbserver
+  become: true
+  vars_files:
+    - vars/default.yml
+
+  tasks:
+    - name: Upgrade installed packages
+      apt:
+        upgrade: yes
+        update_cache: yes  # update pckg list (optional)
+
+    # Netplan configuration task
+    - name: Copy Netplan configuration file
+      copy:
+        src: ./dbserver/files/01-dbserver-netplan.yaml
+        dest: /etc/netplan/
+        owner: root
+        group: root
+        mode: 0644
+    - name: Apply Netplan configuration
+      command: netplan apply
+
+    # MySQL and dependencies installation
+    - name: Install MySQL Packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop: [ 'mysql-server', 'python3-pymysql', 'python3-mysqldb' ]
+      tags: [ system ]
+
+  # MySQL Configuration
+    - name: Set the root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      tags: [ mysql, mysql-root ]
+
+    - name: Remove all anonymous user accounts
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      tags: [ mysql ]
+
+    - name: Remove the MySQL test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      tags: [ mysql ]
+
+    - name: Creates database for WordPress
+      mysql_db:
+        name: "{{ mysql_db }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      tags: [ mysql ]
+
+    - name: Create MySQL user for WordPress
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      tags: [ mysql ]
+
+    - name: Copy my.cnf config file
+      copy:
+        src: ./dbserver/files/my.cnf
+        dest: /etc/mysql/my.cnf
+        mode: '644'
+      notify:
+        - restart mysql service

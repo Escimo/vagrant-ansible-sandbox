@@ -1,0 +1,30 @@
+---
+# Playbook to install and configure MySQL with geerlinger.mysql role
+
+# Replace 'target_host' with the actual hostname or IP of your target server
+- hosts: dbserver
+  become: true  # Allow tasks to run with root privileges
+
+  # Install required Ansible collections, if not already available
+  collections:
+    - geerlingguy.mysql
+
+  # Install geerlinger.mysql role
+  roles:
+    - geerlingguy.mysql
+
+  # Configure MySQL using role variables
+  vars:
+    # Set the desired MySQL version
+    mysql_version: "8.0"
+
+    # Set strong root password (replace with your own)
+    mysql_root_password: "Pa$$word1234"
+
+    # Optionally, create a database and user
+    mysql_db: "my_database"
+    mysql_user: "my_user"
+    mysql_user_password: "dbuser_Pa$$word1234"
+
+  # Grant appropriate privileges to the user
+  mysql_user_priv: "{{ mysql_db }}.*"
