@@ -1,6 +1,11 @@
 ---
 #MySQL Settings
-mysql_root_password: "mysql_root_password"
-mysql_db: "wordpress"
-mysql_user: "wordpress"
-mysql_password: "password"
+root_password: mysql_root_password
+admin_user: wp_user
+admin_password: wp_password
+db_name: wordpress
+password_validation_policy: 0     
+
+# 0 - Low
+# 1 - Medium
+# 2 - Strong

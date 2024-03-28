@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
       end
     end 
   config.vm.define "dbserver" do |dbserver|
-      dbserver.vm.box = "ubuntu/bionic64" #Ubuntu 18.04LTS (Bionic Beave) for easiest installation of MySQL
+      dbserver.vm.box = "ubuntu/jammy64"
       dbserver.vm.network "private_network", ip: "192.168.100.3"
       dbserver.vm.network "private_network", ip: "192.168.101.3"
       dbserver.vm.hostname = "dbserver"

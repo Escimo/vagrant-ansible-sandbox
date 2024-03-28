@@ -3,13 +3,12 @@
   hosts: dbserver
   become: true
   vars_files:
-    - vars/default.yml
+    - ./dbserver/vars/default.yml
 
   tasks:
-    - name: Upgrade installed packages
+    - name: Update apt cache
       apt:
-        upgrade: yes
-        update_cache: yes  # update pckg list (optional)
+        update_cache: yes
 
     # Netplan configuration task
     - name: Copy Netplan configuration file
@@ -23,55 +22,66 @@
       command: netplan apply
 
     # MySQL and dependencies installation
-    - name: Install MySQL Packages
-      apt:
-        name: "{{ item }}"
-        state: latest
-      loop: [ 'mysql-server', 'python3-pymysql', 'python3-mysqldb' ]
-      tags: [ system ]
+    - name: Installing Mysql
+      package:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      loop:
+        - mysql-server
+        - mysql-client
+        - python3-mysqldb
+        - libmysqlclient-dev
+      become: yes
 
-  # MySQL Configuration
-    - name: Set the root password
+    - name: start and enable mysql service
+      service:
+         name: mysql
+         state: started
+         enabled: yes
+
+    - name: Set root user password
       mysql_user:
         name: root
-        password: "{{ mysql_root_password }}"
+        password: "{{root_password}}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      tags: [ mysql, mysql-root ]
+        host: localhost
+        login_user: root
+        login_password: ''
+        state: present
 
-    - name: Remove all anonymous user accounts
+    - name: Create admin user with remote access
       mysql_user:
-        name: ''
-        host_all: yes
-        state: absent
+        name: "{{admin_user}}"
+        password: "{{admin_password}}"
+        priv: '*.*:ALL'
+        host: '%'
+        append_privs: yes
         login_user: root
-        login_password: "{{ mysql_root_password }}"
-      tags: [ mysql ]
-
-    - name: Remove the MySQL test database
+        login_password: "{{root_password}}"
+        state: present
+    
+    - name: creating database 
       mysql_db:
-        name: test
-        state: absent
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
-      tags: [ mysql ]
-
-    - name: Creates database for WordPress
-      mysql_db:
-        name: "{{ mysql_db }}"
+        name: "{{db_name}}"
         state: present
         login_user: root
-        login_password: "{{ mysql_root_password }}"
-      tags: [ mysql ]
+        login_password: "{{root_password}}"
 
-    - name: Create MySQL user for WordPress
-      mysql_user:
-        name: "{{ mysql_user }}"
-        password: "{{ mysql_password }}"
-        priv: "{{ mysql_db }}.*:ALL"
-        state: present
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
-      tags: [ mysql ]
+    - name: Execute MySQL secure installation
+      expect:
+        command: mysql_secure_installation
+        responses:
+          'Enter password for user root:': "{{ root_password }}"
+          'Press y\|Y for Yes, any other key for No': 'Y'
+          'Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG': "{{ password_validation_policy }}"
+          'Change the password for root \? \(\(Press y\|Y for Yes, any other key for No\)': 'n'
+          'Remove anonymous users\? \(Press y\|Y for Yes, any other key for No\)': 'Y'
+          'Disallow root login remotely\? \(Press y\|Y for Yes, any other key for No\)': 'Y'
+          'Remove test database and access to it\? \(Press y\|Y for Yes, any other key for No\)': 'Y'
+          'Reload privilege tables now\? \(Press y\|Y for Yes, any other key for No\)': 'Y'
+      environment:
+        MYSQL_PWD: "{{ root_password }}"
 
     - name: Copy my.cnf config file
       copy:
@@ -80,3 +90,9 @@
         mode: '644'
       notify:
         - restart mysql service
+
+  handlers:
+    - name: Restart mysql
+      service:
+        name: mysql
+        state: restarted
